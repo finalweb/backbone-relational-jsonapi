@@ -87,6 +87,8 @@
 
       return data;
     };
+
+    return Backbone;
   };
 
   var _backbone2 = _interopRequireDefault(_backbone);

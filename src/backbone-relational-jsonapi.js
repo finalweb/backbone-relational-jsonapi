@@ -81,4 +81,6 @@ export default function(Backbone, _){
 
     return data;
   };
+
+  return Backbone;
 };

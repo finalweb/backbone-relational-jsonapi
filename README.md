@@ -1,45 +1,37 @@
 # backbone-relational-jsonapi
 
-Overloads `Backbone.Collection` and `Backbone.RelationalModel` `parse` methods to add compatibility with the [JSONapi](http://jsonapi.org/) protocol.
+Overloads `Backbone.Collection` and `Backbone.Relational.Model` `parse` methods to add compatibility with the [JSONapi](http://jsonapi.org/) protocol.
 
 ## Installation
 
-    $ bower install backbone-relational-jsonapi
+    $ npm install backbone-relational-jsonapi
 
 ## Documentation
 
-Backbone and Backbone.Relational and Underscore need to be loaded before this library. Then, the `parse` methods are overloaded. For example, using RequireJS, you'll need to shim it as follows
+###Node
 
-    require.config({
-        paths : {
-            'backbone': 'path/to/backbone',
-            'backbone-relational': 'path/to/backbone-relational',
-            'backbone-relational-jsonapi': 'path/to/backbone-relational-jsonapi'
-        }
-        shim: {
-            'backbone' : {
-                exports : 'Backbone',
-                deps : ['jquery','underscore']
-            },
-            'backbone-relational': {
-                deps: ['backbone']
-            },
-            'backbone-jsonapi' : {
-                deps : ['backbone', 'backbone-relational','underscore']
-            },
-        }
+First, install the package:
 
-To use it, you can require it at your application's boostrap like
+    npm install backbone-relational-jsonapi --save-dev
 
-    define([
-        "backbone",
-        "backbone-relational",
-        "backbone-jsonapi"
-    ], function(Backbone) {
-        // Your application here
-    });
+Then require it:
 
-And your instance of `Backbone` will use the library.
+    var _ = require('underscore'),
+        Backbone = require('backbone');
+    Backbone.Relational = require('backbone-relational');
+    require('backbone-relational-jsonapi')(Backbone, _);
+
+###Browser
+
+First include the script after backbone and underscore.
+
+    <script src="underscore.js"></script>
+    <script src="backbone.js"></script>
+    <script src="backbone-relational-jsonapi.js"></script>
+
+Then boot it up.
+
+    backboneRelationalJsonapi(Backbone, _);
 
 ## Currently supported
 
