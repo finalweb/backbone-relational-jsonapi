@@ -1,32 +1,29 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['exports', 'underscore'], factory);
+    define(['exports', 'backbone', 'backbone-relational', 'underscore'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(exports, require('underscore'));
+    factory(exports, require('backbone'), require('backbone-relational'), require('underscore'));
   } else {
     var mod = {
       exports: {}
     };
-    factory(mod.exports, global.underscore);
+    factory(mod.exports, global.backbone, global.backboneRelational, global.underscore);
     global.backboneRelationalJsonapi = mod.exports;
   }
-})(this, function (exports, _underscore) {
+})(this, function (exports, _backbone, _backboneRelational, _underscore) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.boot = undefined;
 
-  var _underscore2 = _interopRequireDefault(_underscore);
+  exports.default = function (Backbone, _) {
 
-  function _interopRequireDefault(obj) {
-    return obj && obj.__esModule ? obj : {
-      default: obj
-    };
-  }
+    //use internal copies if Backbone, Underscore and Relational are not passed.
+    var Backbone = Backbone || _backbone2.default;
+    Backbone.Relational = Backbone.Relational || _backboneRelational2.default;
+    var _ = _ || _underscore2.default;
 
-  function boot(Backbone) {
     var ModelFactory = function ModelFactory() {
       this.registeredModels = {};
     };
@@ -43,7 +40,7 @@
     };
 
     ModelFactory.prototype.createFromArray = function (items) {
-      _underscore2.default.each(items, function (item) {
+      _.each(items, function (item) {
         this.findOrCreate(item);
       }, this);
     };
@@ -81,16 +78,28 @@
       data.id = response.id;
 
       if (response.relationships) {
-        var simplifiedRelations = _underscore2.default.mapObject(response.relationships, function (value) {
+        var simplifiedRelations = _.mapObject(response.relationships, function (value) {
           return value.data;
         });
 
-        _underscore2.default.extend(data, simplifiedRelations);
+        _.extend(data, simplifiedRelations);
       }
 
       return data;
     };
   };
 
-  exports.boot = boot;
+  var _backbone2 = _interopRequireDefault(_backbone);
+
+  var _backboneRelational2 = _interopRequireDefault(_backboneRelational);
+
+  var _underscore2 = _interopRequireDefault(_underscore);
+
+  function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : {
+      default: obj
+    };
+  }
+
+  ;
 });

@@ -1,7 +1,15 @@
 'use strict';
-import _ from 'underscore';
+import myBackbone from 'backbone';
+import Relational from 'backbone-relational';
+import underscore from 'underscore';
 
-function boot(Backbone){
+export default function(Backbone, _){
+
+  //use internal copies if Backbone, Underscore and Relational are not passed.
+  var Backbone = Backbone || myBackbone;
+  Backbone.Relational = Backbone.Relational || Relational;
+  var _ = _ || underscore;
+
   var ModelFactory = function() {
     this.registeredModels = {};
   };
@@ -74,5 +82,3 @@ function boot(Backbone){
     return data;
   };
 };
-
-export {boot};
