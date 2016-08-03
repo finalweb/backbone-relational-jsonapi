@@ -1,47 +1,44 @@
 'use strict';
-import myBackbone from 'backbone';
-import Relational from 'backbone-relational';
-import underscore from 'underscore';
 
 export default function(Backbone, _){
 
-  //use internal copies if Backbone, Underscore and Relational are not passed.
-  var Backbone = Backbone || myBackbone;
-  Backbone.Relational = Backbone.Relational || Relational;
-  var _ = _ || underscore;
+  class ModelFactory{
 
-  var ModelFactory = function() {
-    this.registeredModels = {};
-  };
+    constructor(){
+      this.registeredModels = {};
+    }
 
-  ModelFactory.prototype.registerModel = function(model) {
-    this.registeredModels[model.prototype.defaults.type] = model;
-  }
+    registerModel(model){
+      this.registeredModels[model.prototype.defaults.type] = model;
+    }
 
-  ModelFactory.prototype.findOrCreate = function(data) {
-    if (this.registeredModels[data.type]){
-      var model = this.registeredModels[data.type].findOrCreate(data, {parse: true});
-      if(model)
-        return model;
+    findOrCreate(data, options, type){
+      options = _.extend({parse: true}, options);
+      if (this.registeredModels[data.type || type]){
+        var model = this.registeredModels[data.type || type].findOrCreate(data, options);
+        if(model)
+          return model;
+      }
+    }
+
+    createFromArray(items, options, type){
+      _.each(items, function(item) {
+        this.findOrCreate(item, options, type);
+      }, this);
     }
 
   }
 
-  ModelFactory.prototype.createFromArray = function(items) {
-    _.each(items, function(item) {
-      this.findOrCreate(item);
-    }, this);
-  };
+  Backbone.Relational.modelFactory = new ModelFactory();
 
-  Backbone.modelFactory = new ModelFactory();
-
-  Backbone.Relational.Collection.prototype.parse = function(response) {
-    console.log('parsing collection...');
+  Backbone.Relational.Collection.prototype.parse = function(response, options) {
+    var type = this.model.prototype.defaults.type;
+    console.log('Parsing collection...', response);
     if (!response)
       return;
 
-    if (response.included)
-      Backbone.modelFactory.createFromArray(response.included);
+    if (response.data)
+      Backbone.Relational.modelFactory.createFromArray(response.data, options, type);
 
     if (response.meta && this.handleMeta)
       this.handleMeta(response.meta);
@@ -53,13 +50,13 @@ export default function(Backbone, _){
     return response.data;
   };
 
-  Backbone.Relational.Model.prototype.parse = function(response) {
-    console.log('parsing model...');
+  Backbone.Relational.Model.prototype.parse = function(response, options) {
+    console.log('Parsing model...', response);
     if (!response)
       return;
 
     if (response.included)
-      Backbone.modelFactory.createFromArray(response.included);
+      Backbone.Relational.modelFactory.createFromArray(response.included, options);
 
     if (response.data) {
       response = response.data;
@@ -68,7 +65,7 @@ export default function(Backbone, _){
     if (response.meta && this.handleMeta)
       this.handleMeta(response.meta);
 
-    var data = response.attributes || {};
+    var data = !response.attributes && !response.type ? response : response.attributes || {};
     data.id = response.id;
 
     if (response.relationships) {
@@ -79,8 +76,10 @@ export default function(Backbone, _){
       _.extend(data, simplifiedRelations);
     }
 
+    console.log('Returning Model: ', data);
+
     return data;
   };
 
   return Backbone;
-};
+}

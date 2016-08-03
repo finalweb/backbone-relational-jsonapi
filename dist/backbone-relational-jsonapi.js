@@ -1,16 +1,16 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['exports', 'backbone', 'backbone-relational', 'underscore'], factory);
+    define(['exports'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(exports, require('backbone'), require('backbone-relational'), require('underscore'));
+    factory(exports);
   } else {
     var mod = {
       exports: {}
     };
-    factory(mod.exports, global.backbone, global.backboneRelational, global.underscore);
+    factory(mod.exports);
     global.backboneRelationalJsonapi = mod.exports;
   }
-})(this, function (exports, _backbone, _backboneRelational, _underscore) {
+})(this, function (exports) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -18,40 +18,47 @@
   });
 
   exports.default = function (Backbone, _) {
+    var ModelFactory = function () {
+      function ModelFactory() {
+        _classCallCheck(this, ModelFactory);
 
-    //use internal copies if Backbone, Underscore and Relational are not passed.
-    var Backbone = Backbone || _backbone2.default;
-    Backbone.Relational = Backbone.Relational || _backboneRelational2.default;
-    var _ = _ || _underscore2.default;
-
-    var ModelFactory = function ModelFactory() {
-      this.registeredModels = {};
-    };
-
-    ModelFactory.prototype.registerModel = function (model) {
-      this.registeredModels[model.prototype.defaults.type] = model;
-    };
-
-    ModelFactory.prototype.findOrCreate = function (data) {
-      if (this.registeredModels[data.type]) {
-        var model = this.registeredModels[data.type].findOrCreate(data, { parse: true });
-        if (model) return model;
+        this.registeredModels = {};
       }
-    };
 
-    ModelFactory.prototype.createFromArray = function (items) {
-      _.each(items, function (item) {
-        this.findOrCreate(item);
-      }, this);
-    };
+      _createClass(ModelFactory, [{
+        key: 'registerModel',
+        value: function registerModel(model) {
+          this.registeredModels[model.prototype.defaults.type] = model;
+        }
+      }, {
+        key: 'findOrCreate',
+        value: function findOrCreate(data, options, type) {
+          options = _.extend({ parse: true }, options);
+          if (this.registeredModels[data.type || type]) {
+            var model = this.registeredModels[data.type || type].findOrCreate(data, options);
+            if (model) return model;
+          }
+        }
+      }, {
+        key: 'createFromArray',
+        value: function createFromArray(items, options, type) {
+          _.each(items, function (item) {
+            this.findOrCreate(item, options, type);
+          }, this);
+        }
+      }]);
 
-    Backbone.modelFactory = new ModelFactory();
+      return ModelFactory;
+    }();
 
-    Backbone.Relational.Collection.prototype.parse = function (response) {
-      console.log('parsing collection...');
+    Backbone.Relational.modelFactory = new ModelFactory();
+
+    Backbone.Relational.Collection.prototype.parse = function (response, options) {
+      var type = this.model.prototype.defaults.type;
+      console.log('Parsing collection...', response);
       if (!response) return;
 
-      if (response.included) Backbone.modelFactory.createFromArray(response.included);
+      if (response.data) Backbone.Relational.modelFactory.createFromArray(response.data, options, type);
 
       if (response.meta && this.handleMeta) this.handleMeta(response.meta);
 
@@ -62,11 +69,11 @@
       return response.data;
     };
 
-    Backbone.Relational.Model.prototype.parse = function (response) {
-      console.log('parsing model...');
+    Backbone.Relational.Model.prototype.parse = function (response, options) {
+      console.log('Parsing model...', response);
       if (!response) return;
 
-      if (response.included) Backbone.modelFactory.createFromArray(response.included);
+      if (response.included) Backbone.Relational.modelFactory.createFromArray(response.included, options);
 
       if (response.data) {
         response = response.data;
@@ -74,7 +81,7 @@
 
       if (response.meta && this.handleMeta) this.handleMeta(response.meta);
 
-      var data = response.attributes || {};
+      var data = !response.attributes && !response.type ? response : response.attributes || {};
       data.id = response.id;
 
       if (response.relationships) {
@@ -85,23 +92,35 @@
         _.extend(data, simplifiedRelations);
       }
 
+      console.log('Returning Model: ', data);
+
       return data;
     };
 
     return Backbone;
   };
 
-  var _backbone2 = _interopRequireDefault(_backbone);
-
-  var _backboneRelational2 = _interopRequireDefault(_backboneRelational);
-
-  var _underscore2 = _interopRequireDefault(_underscore);
-
-  function _interopRequireDefault(obj) {
-    return obj && obj.__esModule ? obj : {
-      default: obj
-    };
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
   }
 
-  ;
+  var _createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
+
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
 });
