@@ -1,6 +1,6 @@
 {
   "name": "backbone-relational-jsonapi",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A parsing layer for Backbone.Relational that enables data fetching in a format compliant with JSONapi 1.0.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -32,5 +32,5 @@
     "jquery": "^3.0.0",
     "underscore": "^1.8.3"
   },
-  "main": "src/backbone-relational-jsonapi.js"
+  "main": "dist/backbone-relational-jsonapi.js"
 }
