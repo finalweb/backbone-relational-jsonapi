@@ -13,9 +13,12 @@ export default function(Backbone, _){
     }
 
     findOrCreate(data, options, type){
+      var attributes = data.attributes ? data.attributes : data;
+      attributes.id = data.id;
       options = _.extend({parse: true}, options);
-      if (this.registeredModels[data.type || type]){
-        var model = this.registeredModels[data.type || type].findOrCreate(data, options);
+      if (this.registeredModels[type]){
+        var model = this.registeredModels[type].findOrCreate(attributes, options);
+        //console.log('RESULTING MODEL: ', model);
         if(model)
           return model;
       }
@@ -23,6 +26,8 @@ export default function(Backbone, _){
 
     createFromArray(items, options, type){
       _.each(items, function(item) {
+        type = item.type || type;
+        //delete item.type;
         this.findOrCreate(item, options, type);
       }, this);
     }
@@ -33,12 +38,12 @@ export default function(Backbone, _){
 
   Backbone.Relational.Collection.prototype.parse = function(response, options) {
     var type = this.model.prototype.defaults.type;
-    console.log('Parsing collection...', response);
+    //console.log('Parsing collection...', response);
     if (!response)
       return;
 
-    if (response.data)
-      Backbone.Relational.modelFactory.createFromArray(response.data, options, type);
+    if (response.included)
+      Backbone.Relational.modelFactory.createFromArray(response.included, options, type);
 
     if (response.meta && this.handleMeta)
       this.handleMeta(response.meta);
@@ -51,7 +56,7 @@ export default function(Backbone, _){
   };
 
   Backbone.Relational.Model.prototype.parse = function(response, options) {
-    console.log('Parsing model...', response);
+    //console.log('Parsing model...', response);
     if (!response)
       return;
 
@@ -70,13 +75,20 @@ export default function(Backbone, _){
 
     if (response.relationships) {
       var simplifiedRelations = _.mapObject(response.relationships, function(value) {
+        //we need to strip the types out so we don't end up with weird attributes.
+        /*if (Array.isArray(value.data)){
+          for (var item in value.data){
+            delete value.data[item]['type'];
+          }
+        } else {
+          delete value.data.type;
+        }*/
+        //console.log('relationship meta: ', value);
         return value.data;
       });
 
       _.extend(data, simplifiedRelations);
     }
-
-    console.log('Returning Model: ', data);
 
     return data;
   };
