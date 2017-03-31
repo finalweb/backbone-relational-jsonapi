@@ -31,15 +31,41 @@
           this.registeredModels[model.prototype.defaults.type] = model;
         }
       }, {
+        key: 'getSimplifiedRelations',
+        value: function getSimplifiedRelations(relationships) {
+          if (relationships) {
+            var simplifiedRelations = _.mapObject(relationships, function (value) {
+              return value.data;
+            });
+            var meta = _.mapObject(relationships, function (value) {
+              return value.meta;
+            });
+            return { models: simplifiedRelations, meta: meta };
+          } else {
+            return {};
+          }
+        }
+      }, {
         key: 'findOrCreate',
         value: function findOrCreate(data, options, type) {
           var attributes = data.attributes ? data.attributes : data;
           attributes.id = data.id;
+          var relations = this.getSimplifiedRelations(data.relationships);
+          _.extend(attributes, relations.models);
+
           options = _.extend({ parse: true }, options);
           if (this.registeredModels[type]) {
             var model = this.registeredModels[type].findOrCreate(attributes, options);
             //console.log('RESULTING MODEL: ', model);
-            if (model) return model;
+            if (model) {
+              //handle the meta for each relationship
+              _.each(relations.meta, function (meta, key) {
+                if (model.get(key).handleMeta) {
+                  model.get(key).handleMeta(meta);
+                }
+              });
+              return model;
+            }
           }
         }
       }, {
@@ -84,27 +110,14 @@
         response = response.data;
       }
 
-      if (response.meta && this.handleMeta) this.handleMeta(response.meta);
+      if (response.meta && this.handleMeta) {
+        this.handleMeta(response.meta);
+      }
 
       var data = !response.attributes && !response.type ? response : response.attributes || {};
       data.id = response.id;
 
-      if (response.relationships) {
-        var simplifiedRelations = _.mapObject(response.relationships, function (value) {
-          //we need to strip the types out so we don't end up with weird attributes.
-          /*if (Array.isArray(value.data)){
-            for (var item in value.data){
-              delete value.data[item]['type'];
-            }
-          } else {
-            delete value.data.type;
-          }*/
-          //console.log('relationship meta: ', value);
-          return value.data;
-        });
-
-        _.extend(data, simplifiedRelations);
-      }
+      _.extend(data, Backbone.Relational.modelFactory.getSimplifiedRelations(response.relationships).models);
 
       return data;
     };
