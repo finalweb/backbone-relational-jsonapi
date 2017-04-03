@@ -39,7 +39,7 @@ export default function(Backbone, _){
         if(model){
           //handle the meta for each relationship
           _.each(relations.meta, (meta, key) => {
-            if (model.get(key).handleMeta){
+            if (model.get(key) && model.get(key).handleMeta){
               model.get(key).handleMeta(meta);
             }
           });

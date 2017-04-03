@@ -60,7 +60,7 @@
             if (model) {
               //handle the meta for each relationship
               _.each(relations.meta, function (meta, key) {
-                if (model.get(key).handleMeta) {
+                if (model.get(key) && model.get(key).handleMeta) {
                   model.get(key).handleMeta(meta);
                 }
               });
