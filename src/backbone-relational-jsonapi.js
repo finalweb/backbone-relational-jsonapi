@@ -32,6 +32,8 @@ export default function(Backbone, _){
       var relations = this.getSimplifiedRelations(data.relationships);
       _.extend(attributes, relations.models);
 
+      //console.log('FIND OR CREATE: ', attributes);
+
       options = _.extend({parse: true}, options);
       if (this.registeredModels[type]){
         var model = this.registeredModels[type].findOrCreate(attributes, options);
@@ -51,6 +53,9 @@ export default function(Backbone, _){
     createFromArray(items, options, type){
       _.each(items, function(item) {
         type = item.type || type;
+
+        //console.log('CREATING: ', item);
+
         //delete item.type;
         this.findOrCreate(item, options, type);
       }, this);
@@ -76,6 +81,8 @@ export default function(Backbone, _){
       return response;
     }
 
+    Backbone.Relational.modelFactory.createFromArray(response.data, options, type);
+
     return response.data;
   };
 
@@ -98,7 +105,9 @@ export default function(Backbone, _){
     var data = !response.attributes && !response.type ? response : response.attributes || {};
     data.id = response.id;
 
-    _.extend(data, Backbone.Relational.modelFactory.getSimplifiedRelations(response.relationships).models);
+
+    var rels = Backbone.Relational.modelFactory.getSimplifiedRelations(response.relationships);
+    _.extend(data, rels.models);
 
     return data;
   };
